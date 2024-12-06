@@ -1,0 +1,7 @@
+template:
+  path: ec2-rds.yaml
+  type: file
+parameters:
+  EnvironmentType: dev
+  KeyPairName: cf-test
+  DBPassword: Abcd1234

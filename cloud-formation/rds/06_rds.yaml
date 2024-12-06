@@ -2,8 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Part 2 - Add a database with CloudFormation
 
 Parameters:
-  AvailabilityZone:
-    Type: AWS::EC2::AvailabilityZone::Name
   EnvironmentType:
     Description: 'Specify the Environment type of the stack.'
     Type: String
@@ -13,9 +11,9 @@ Parameters:
       - test
       - prod
   AmiID:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
     Description: 'The ID of the AMI.'
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+    Default: ami-055e3d4f0bbeb5878
   KeyPairName:
     Type: String
     Description: The name of an existing Amazon EC2 key pair in this region to use to SSH into the Amazon EC2 instances.
@@ -54,7 +52,6 @@ Resources:
   WebAppInstance:
     Type: AWS::EC2::Instance
     Properties:
-      AvailabilityZone: !Ref AvailabilityZone
       ImageId: !Ref AmiID
       InstanceType: !FindInMap [EnvironmentToInstanceType, !Ref EnvironmentType, InstanceType]
       KeyName: !Ref KeyPairName
@@ -93,6 +90,8 @@ Resources:
     Type: AWS::RDS::DBInstance
     Properties:
       DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      VPCSecurityGroups:
+      - !GetAtt DBEC2SecurityGroup.GroupId
       AllocatedStorage: '5'
       DBInstanceClass: db.t3.micro
       Engine: postgres
@@ -101,8 +100,22 @@ Resources:
       Tags:
         - Key: Name
           Value: !Join [ '-', [ webapp-rds, !Ref EnvironmentType ] ]
-    DeletionPolicy: Snapshot
-    UpdateReplacePolicy: Snapshot
+    DeletionPolicy: Delete
+
+  DBEC2SecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: !Join [ '-', [ webapp-db-security-group, !Ref EnvironmentType ] ]
+      GroupDescription: Allow postgres inbound traffic
+      SecurityGroupIngress:
+      - IpProtocol: tcp
+        FromPort: 5432
+        ToPort: 5432
+        SourceSecurityGroupName:
+          Ref: WebAppSecurityGroup
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ webapp-db-security-group, !Ref EnvironmentType ] ]
 
 Outputs:
   WebsiteURL:

@@ -2,8 +2,6 @@ AWSTemplateFormatVersion: 2010-09-09
 Description: Part 1 - Build a webapp stack with CloudFormation
 
 Parameters:
-  AvailabilityZone:
-    Type: AWS::EC2::AvailabilityZone::Name
   EnvironmentType:
     Description: 'Specify the Environment type of the stack.'
     Type: String
@@ -13,9 +11,9 @@ Parameters:
       - test
       - prod
   AmiID:
-    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Type: String
     Description: 'The ID of the AMI.'
-    Default: /aws/service/ami-amazon-linux-latest/amzn2-ami-hvm-x86_64-gp2
+    Default: ami-055e3d4f0bbeb5878
   KeyPairName:
     Type: String
     Description: The name of an existing Amazon EC2 key pair in this region to use to SSH into the Amazon EC2 instances.
@@ -33,7 +31,6 @@ Resources:
   WebAppInstance:
     Type: AWS::EC2::Instance
     Properties:
-      AvailabilityZone: !Ref AvailabilityZone
       ImageId: !Ref AmiID
       InstanceType: !FindInMap [EnvironmentToInstanceType, !Ref EnvironmentType, InstanceType]
       KeyName: !Ref KeyPairName
@@ -43,7 +40,7 @@ Resources:
   WebAppSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Join [ '-', [ webapp-security-group, !Ref EnvironmentType ] ]
+      GroupName: !Join [ '-', [ webapp-security-group, dev ] ]
       GroupDescription: 'Allow HTTP/HTTPS and SSH inbound and outbound traffic'
       SecurityGroupIngress:
         - IpProtocol: tcp

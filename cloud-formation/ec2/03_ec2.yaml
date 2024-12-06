@@ -5,9 +5,9 @@ Resources:
   WebAppInstance:
     Type: AWS::EC2::Instance
     Properties:
-      ImageId: ami-0d5eff06f840b45e9 # ImageID valid only in us-east-1 region
-      InstanceType: t2.micro
-      KeyName: jenna # <-- Change to use your key-pair name
+      ImageId: ami-055e3d4f0bbeb5878 # ImageID valid only in us-east-1 region
+      InstanceType: t2.nano
+      KeyName: cf-test # <-- Change to use your key-pair name
       SecurityGroupIds:
         - !Ref WebAppSecurityGroup
 
@@ -29,3 +29,17 @@ Resources:
           FromPort: 22
           ToPort: 22
           CidrIp: 0.0.0.0/0
+
+  WebAppEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+      InstanceId: !Ref WebAppInstance
+      Tags:
+        - Key: Name
+          Value: !Join [ '-', [ webapp-eip, dev ] ]
+
+Outputs:
+  WebsiteURL:
+    Value: !Sub http://${WebAppEIP}
+    Description: WebApp URL
